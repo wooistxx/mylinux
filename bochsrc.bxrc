@@ -1,0 +1,8 @@
+megs: 32
+romimage: file=$BXSHARE/BIOS-bochs-latest, address=0x0, options=none
+vgaromimage: file=$BXSHARE/VGABIOS-lgpl-latest
+floppya: 1_44="boot.img", status=inserted
+boot: a
+log: bochsout.txt
+mouse: enabled=0
+keyboard: type=mf, serial_delay=250, paste_delay=100000, user_shortcut=none

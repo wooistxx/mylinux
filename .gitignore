@@ -1,0 +1,12 @@
+bochsout.txt
+*.out
+*.o
+*.img
+
+
+# some os files
+*.swap
+*.bak
+
+# material
+material/
