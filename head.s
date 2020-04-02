@@ -39,14 +39,14 @@ startup_32:
     movw $timer_interrupt, %ax
     movw $0x8E00, %dx
     movl $0x08, %ecx
-    lea idt(, %ecx, 8), %esi
+    lea _idt(, %ecx, 8), %esi
     movl %eax, (%esi)
     movl %edx, 4(%esi)
 # 设置系统调用中断（0x80）
     movw $system_interrupt, %ax
     movw $0xef00, %dx
     movl $0x80, %ecx
-    lea idt(, %ecx, 8), %esi
+    lea _idt(, %ecx, 8), %esi
     movl %eax, (%esi)
     movl %edx, 4(%esi)
 
@@ -81,7 +81,7 @@ startup_32:
 
 
 setup_gdt:
-    lgdt lgdt_opcode
+    lgdt gdt_descr
     ret
 
 setup_idt:
@@ -89,7 +89,7 @@ setup_idt:
     movl $0x00080000, %eax
     movw %dx, %ax
     movw $0x8E00, %dx
-    lea idt, %edi
+    lea _idt, %edi
     mov $256, %ecx
 rp_sidt:
     movl %eax, (%edi)
@@ -97,7 +97,7 @@ rp_sidt:
     addl $8, %edi
     dec %ecx
     jne rp_sidt
-    lidt lidt_opcode
+    lidt idt_descr
     ret
 
 
@@ -180,29 +180,36 @@ system_interrupt:
 current:.long 0
 scr_loc:.long 0
 
-.align 2
-lidt_opcode:
-    .word 256*8-1
-    .long idt
-lgdt_opcode:
-    .word (end_gdt-gdt)-1	# so does gdt
-    .long gdt
+.align 4
+.word 0
+idt_descr:
+    .word 256*8 - 1
+    .long _idt
 
-    .align 8
-idt:	.fill 256, 8, 0	
 
-gdt:
+.align 4
+.word 0
+gdt_descr:
+    .word 256*8 - 1
+    .long _gdt
+
+.align 8
+# interrupt descriptor table
+_idt:
+	.fill 256, 8, 0	
+# global descriptor table
+_gdt:
     .quad 0x0000000000000000
     .quad 0x00c09a00000007ff
     .quad 0x00c09200000007ff
-    .quad 0x00c0920b80000002
-
-    .word 0x0068, tss0, 0xe900, 0x0
-    .word 0x0040, ldt0, 0xe200, 0x0
-    .word 0x0068, tss1, 0xe900, 0x0
-    .word 0x0040, ldt1, 0xe200, 0x0
+	.quad 0x0000000000000000
+    # .quad 0x00c0920b80000002
+    # .word 0x0068, tss0, 0xe900, 0x0
+    # .word 0x0040, ldt0, 0xe200, 0x0
+    # .word 0x0068, tss1, 0xe900, 0x0
+    # .word 0x0040, ldt1, 0xe200, 0x0
 end_gdt:
-    .fill 128, 4, 0
+    .fill 252, 8, 0
 init_stack:
     .long init_stack
     .word 0x10
@@ -266,3 +273,5 @@ task1:
 
     .fill 128, 4, 0
 usr_stk1:
+
+
