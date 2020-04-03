@@ -202,12 +202,12 @@ _gdt:
     .quad 0x0000000000000000
     .quad 0x00c09a00000007ff
     .quad 0x00c09200000007ff
-	.quad 0x0000000000000000
-    # .quad 0x00c0920b80000002
-    # .word 0x0068, tss0, 0xe900, 0x0
-    # .word 0x0040, ldt0, 0xe200, 0x0
-    # .word 0x0068, tss1, 0xe900, 0x0
-    # .word 0x0040, ldt1, 0xe200, 0x0
+	# .quad 0x0000000000000000
+    .quad 0x00c0920b80000002
+    .word 0x0068, tss0, 0xe900, 0x0
+    .word 0x0040, ldt0, 0xe200, 0x0
+    .word 0x0068, tss1, 0xe900, 0x0
+    .word 0x0040, ldt1, 0xe200, 0x0
 end_gdt:
     .fill 252, 8, 0
 init_stack:
@@ -275,3 +275,6 @@ task1:
 usr_stk1:
 
 
+.org 512 * 200
+	# 我们暂时这样处理，假装自己有200个块的system模块
+	

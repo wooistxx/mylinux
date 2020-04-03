@@ -18,13 +18,14 @@ Image=boot.img
 
 all: Image
 
-Image: boot.o setup.o
+Image: boot.o setup.o system
 	objcopy -O binary boot.o boot
 	objcopy -O binary setup.o setup
-	#objcopy -O binary system system.head
+	objcopy -O binary system system.head
 	cat setup >> boot
-	#cat system.head >> boot
-	dd bs=512 if=boot of=$(Image) seek=0
+	cat system.head >> boot
+	mv boot $(Image)
+	#dd bs=512 if=boot of=$(Image) seek=0
 	#dd bs=512 if=/dev/zero of=tmp.img count=2521
 	#cat tmp.img >> $(Image)
 

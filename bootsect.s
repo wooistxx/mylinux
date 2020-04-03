@@ -7,7 +7,8 @@ SETUPSEG=0x9020
 SETUPLEN=4 
 
 SYSSEG=0x1000
-SYSLEN=17 #setup占用的磁道数
+SYSSIZE=0x3000
+ENDSEG=SYSSEG+SYSSIZE
 
 .globl start
 .text
@@ -34,6 +35,7 @@ go:
     mov %ax, %es 
     mov %ax, %ss
     mov %dx, %sp
+
 
 # 将sectup读入到内存的0x90200
 load_setup:
@@ -71,9 +73,9 @@ ok_load_setup:
 
 
 # 读取system模块到0x10000处
-	mov SYSSEG, %ax
+	mov $SYSSEG, %ax
 	mov %ax, %es
-	#call read_it
+	call read_it
 	call kill_motor
 	
 	# mov root_dev, %ax
@@ -86,7 +88,88 @@ ok_load_setup:
 	# mov ax, root_dev, 
 
 	ljmp $SETUPSEG, $0
+
+
+
 # --------------------------------------------------------------------------------
+sread:
+	.word 1 + SETUPLEN
+head:
+	.word 0
+track:
+	.word 0
+
+read_it:
+	mov %es, %ax
+	test $0x0fff, %ax
+die:
+	jne die
+	xor %bx, %bx
+	
+rp_read:
+	mov %es, %ax
+	cmp $ENDSEG, %ax
+	jb ok1_read
+	ret
+ok1_read:
+	mov %cs:sectors, %ax
+	sub sread, %ax
+	mov %ax, %cx
+	shl $9, %cx
+	add %bx, %cx
+	jnc ok2_read
+	je ok2_read
+
+	xor %ax, %ax
+	sub %bx, %ax
+	shr $9, %ax
+
+ok2_read:
+	call read_track
+	mov %ax, %cx
+	add sread, %ax
+	cmp %cs:sectors, %ax
+	jne ok3_read
+	mov $1, %ax
+	sub head, %ax
+	jne ok4_read
+	incw track
+	
+
+ok4_read:
+	mov %ax, head
+	xor %ax, %ax
+
+ok3_read:
+	mov %ax, sread
+	shl $9, %cx
+	add %cx, %bx
+	jnc rp_read
+	mov %es, %ax
+	add $0x10, %ah
+	mov %ax, %es
+	xor %bx, %bx
+	jmp rp_read
+	
+read_track:
+	pusha
+	pusha
+	mov $0xe2e, %ax
+	mov $7, %bx
+	int $0x10
+	popa
+	mov track, %dx
+	mov sread, %cx
+	inc %cx
+	mov %dl, %ch
+	mov head, %dx
+	mov %dl, %dh
+	and $0x0100, %dx
+	mov $2, %ah
+	int $0x13
+	popa
+	ret
+
 kill_motor:
 	push %dx
 	mov $0x3f2, %dx
@@ -104,4 +187,3 @@ msg1:
 
 .org 510
     .word 0xaa55
-
